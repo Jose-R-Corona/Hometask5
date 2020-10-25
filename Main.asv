@@ -1,22 +1,21 @@
 clear all
 syms d1 s q1 q2  l1 dq1 dq2 ddq1 ddq2  d1 d2 m1 m2 I1 I2 g real
-L=[l1 l1]
-q=[q1;q2]
+L=[l1 l1];
+q=[q1;q2];
 
 %origins and centers
-O0 = [0 0 0]'
-Oc1 = [0 0 0]'  %center of mass in B
-O1 = [(l1+l1)*cos(q1) (l1+l1)*sin(q1) 0]'
-Oc2 = [(l1+q2)*cos(q1) (l1+q2)*sin(q1) 0 ]'  %q2 0 to L
-O2 = [(q2+l1+l1)*cos(q1) (q2+l1+l1)*sin(q1) 0 ]'
+O0 = [0 0 0]';
+Oc1 = [0 0 0]' ; %center of mass in B
+O1 = [(l1)*cos(q1) (l1)*sin(q1) 0]';
+Oc2 = [(l1+q2)*cos(q1) (l1+q2)*sin(q1) 0 ]' ; %q2 0 to L
+O2 = [((2*q2)+l1)*cos(q1) ((2*q2)+l1)*sin(q1) 0 ]';
 
 %Axes rotation
-Z0 = [0 0 1]'
-Z1 = [cos(q1) sin(q1) 0]'
+Z0 = [0 0 1]';
+Z1 = [cos(q1) sin(q1) 0]';
 Zer = [0 0 0]';
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 %Jacobbians
 Jv1 = [cross(Z0,(Oc1-O0)), Zer];
 Jv2 = [cross(Z0,(Oc2-O0)), Z1];
@@ -67,10 +66,12 @@ ddq = [ddq1; ddq2];
 %C
 C = Coriolis(D,q,dq,2);
 C=simplify(C)
- 
+
+%%
+%%%%%%%%%%%%%%%%%%%%% Torques function
 tor = D*ddq+C*dq+G;
 tor=simplify(tor)
-
+%%%%%%%%%%%%%%%%%%%%%
 %%
 %Appling a force
 %subs
@@ -78,19 +79,27 @@ D(q1,q2) = subs(D,{m2, I1, I2, l1},{2 1 2 0.2});
 C(q1,q2,dq1,dq2) = subs(C*dq ,{m2, I1, I2, l1},{2 1 2 0.2});
 G(q1,q2) = subs(G ,{m2, I1, I2, l1,g},{2 1 2 0.2 9.8});
 % 
-%initial 
-q1_0 = -pi/3; % position 
+%initial conditions
+q1_0 = pi/2; % position 
 q2_0 = 0;  
 dq1_0 = 0; %velocity
 dq2_0 = 0;
 ddq1p_0 =0; %acceleration
 ddq2p_0 =0;
-dt=0.01;
+dt=0.01;    %step in seconds
+n=100;      %total steps
+
+%force funtion to applied
+u1p_0 = 10;
+u2p_0 = 5;
+for i = 1:n
+   u1p(i)=u1p_0;
+   u2p(i)=u2p_0; 
+end
 
 %Appling a force to the joints
-U = [0;0];
-n=100;
 for i = 1:n
+     U = [u1p(i);u2p(i)];
      q1p(i)=q1_0;
      q2p(i)=q2_0;
      dq1p(i)=dq1_0;
@@ -106,8 +115,21 @@ for i = 1:n
      dq2_0=dq2p(i) + double(ddq(2)*dt);
      q1_0 = q1p(i) + dq1_0*dt;
      q2_0 = q2p(i) + dq2_0*dt;
- end
- t = 0:0.1:(0.1*(n-1));
+end
+
+%%
+%Plots
+t = 0:0.1:(0.1*(n-1));
+ 
+ figure
+ plot(t,u1p,'k','linewidth',2)
+ hold on
+ plot(t,u2p,'g','linewidth',2)
+ grid on
+ title('applied force(N) vs time(s)')
+ legend('joint_1', 'joint_2')
+ 
+ 
  figure
  plot(t,q1p,'k','linewidth',2)
  hold on
@@ -133,17 +155,11 @@ for i = 1:n
  title('acceleration(rad/s^2) vs time(s)')
  legend('joint_1', 'joint_2')
  
- figure
- plot(t,ddq1p,'k','linewidth',2)
- hold on
- plot(t,ddq2p,'g','linewidth',2)
- grid on
- title('force(rad/s^2) vs time(s)')
- legend('joint_1', 'joint_2')
- 
+
  
 
-
+%%
+%functions
 function C = Coriolis(D,q,dq,n)
     sym C;
     for k = 1:n

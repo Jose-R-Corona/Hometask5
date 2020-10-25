@@ -1,22 +1,22 @@
 clear all
+close all 
 syms d1 s q1 q2  l1 dq1 dq2 ddq1 ddq2  d1 d2 m1 m2 I1 I2 g real
-L=[l1 l1]
-q=[q1;q2]
+L=[l1 l1];
+q=[q1;q2];
 
 %origins and centers
-O0 = [0 0 0]'
-Oc1 = [0 0 0]'  %center of mass in B
-O1 = [(l1+l1)*cos(q1) (l1+l1)*sin(q1) 0]'
-Oc2 = [(l1+q2)*cos(q1) (l1+q2)*sin(q1) 0 ]'  %q2 0 to L
-O2 = [(q2+l1+l1)*cos(q1) (q2+l1+l1)*sin(q1) 0 ]'
+O0 = [0 0 0]';
+Oc1 = [0 0 0]' ; %center of mass in B
+O1 = [(l1)*cos(q1) (l1)*sin(q1) 0]';
+Oc2 = [(l1+q2)*cos(q1) (l1+q2)*sin(q1) 0 ]' ; %q2 0 to L
+O2 = [((2*q2)+l1)*cos(q1) ((2*q2)+l1)*sin(q1) 0 ]';
 
 %Axes rotation
-Z0 = [0 0 1]'
-Z1 = [cos(q1) sin(q1) 0]'
+Z0 = [0 0 1]';
+Z1 = [cos(q1) sin(q1) 0]';
 Zer = [0 0 0]';
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 %Jacobbians
 Jv1 = [cross(Z0,(Oc1-O0)), Zer];
 Jv2 = [cross(Z0,(Oc2-O0)), Z1];
@@ -67,10 +67,12 @@ ddq = [ddq1; ddq2];
 %C
 C = Coriolis(D,q,dq,2);
 C=simplify(C)
- 
+
+%%
+%%%%%%%%%%%%%%%%%%%%% Torques function
 tor = D*ddq+C*dq+G;
 tor=simplify(tor)
-
+%%%%%%%%%%%%%%%%%%%%%
 %%
 %Appling a force
 %subs
@@ -90,10 +92,10 @@ n=100;      %total steps
 
 %force funtion to applied
 u1p_0 = 10;
-u2p_0 = 9;
+u2p_0 = 5;
 for i = 1:n
-   u1p(i)=u1p_0;
-   u2p(i)=u2p_0; 
+   u1p(i)=u1p_0+(i*0.15);
+   u2p(i)=u2p_0+(i*0.15); 
 end
 
 %Appling a force to the joints
@@ -114,8 +116,11 @@ for i = 1:n
      dq2_0=dq2p(i) + double(ddq(2)*dt);
      q1_0 = q1p(i) + dq1_0*dt;
      q2_0 = q2p(i) + dq2_0*dt;
- end
- t = 0:0.1:(0.1*(n-1));
+end
+
+%%
+%Plots
+t = 0:0.1:(0.1*(n-1));
  
  figure
  plot(t,u1p,'k','linewidth',2)
@@ -154,7 +159,8 @@ for i = 1:n
 
  
 
-
+%%
+%functions
 function C = Coriolis(D,q,dq,n)
     sym C;
     for k = 1:n
